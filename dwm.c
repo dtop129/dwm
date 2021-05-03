@@ -1902,6 +1902,7 @@ tag(const Arg *arg)
 {
 	if (selmon->sel && arg->ui & TAGMASK) {
 		selmon->sel->tags = arg->ui & TAGMASK;
+		view(arg);
 		focus(NULL);
 		arrange(selmon);
 	}
@@ -1921,6 +1922,7 @@ tagmon(const Arg *arg)
 		XRaiseWindow(dpy, c->win);
 	} else
 		sendmon(c, dirtomon(arg->i));
+	focusmon(arg);
 }
 
 void
