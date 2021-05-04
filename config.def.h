@@ -6,7 +6,7 @@ static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 1;        /* 0 means bottom bar */
 static const int startontag         = 1;        /* 0 means no tag active on start */
-static const char *fonts[]          = { "monospace:size=10" };
+static const char *fonts[]          = { "monospace:size=11", "Symbols Nerd Font:size=13" };
 static char normbgcolor[]           = "#222222";
 static char normbordercolor[]       = "#444444";
 static char normfgcolor[]           = "#bbbbbb";
