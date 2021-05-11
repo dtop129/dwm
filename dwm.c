@@ -214,6 +214,7 @@ static void replaceclient(Client *old, Client *new);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
 static void resizeclient(Client *c, int x, int y, int w, int h);
 static void resizemouse(const Arg *arg);
+static void resizetile(Client *c, int x, int y, int w, int h, int centerx, int centery);
 static void restack(Monitor *m);
 static void run(void);
 static void scan(void);
@@ -1337,7 +1338,7 @@ monocle(Monitor *m)
 	if (n > 0) /* override layout symbol */
 		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
 	for (c = nexttiled(m->clients); c; c = nexttiled(c->next))
-		resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
+		resizetile(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 1, 1);
 }
 
 void
@@ -1623,6 +1624,19 @@ resizemouse(const Arg *arg)
 		sendmon(c, m);
 		selmon = m;
 		focus(NULL);
+	}
+}
+
+void
+resizetile(Client *c, int x, int y, int w, int h, int centerx, int centery)
+{
+	int tw = w, th = h;
+	if (applysizehints(c, &x, &y, &w, &h, 0)) {
+		if (centerx)
+			x += (tw - w) / 2;
+		if (centery)
+			y += (th - h) / 2;
+		resizeclient(c, x, y, w, h);
 	}
 }
 
@@ -2034,12 +2048,12 @@ tile(Monitor *m)
 	for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
 		if (i < m->nmaster) {
 			h = (m->wh - my) / (MIN(n, m->nmaster) - i);
-			resize(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 0);
+			resizetile(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 1, i == (nmaster - 1));
 			if (my + HEIGHT(c) < m->wh)
 				my += HEIGHT(c);
 		} else {
 			h = (m->wh - ty) / (n - i);
-			resize(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 0);
+			resizetile(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 1, i == (n - 1));
 			if (ty + HEIGHT(c) < m->wh)
 				ty += HEIGHT(c);
 		}
