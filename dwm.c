@@ -53,8 +53,8 @@
 #define ISVISIBLE(C)            ((C->tags & C->mon->tagset[C->mon->seltags]))
 #define LENGTH(X)               (sizeof X / sizeof X[0])
 #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
-#define WIDTH(X)                ((X)->w + 2 * (X)->bw)
-#define HEIGHT(X)               ((X)->h + 2 * (X)->bw)
+#define WIDTH(X)                ((X)->w + 2 * ((X)->bw + (X)->gappx))
+#define HEIGHT(X)               ((X)->h + 2 * ((X)->bw + (X)->gappx))
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
 #define XRDB_LOAD_COLOR(R,V)    if (XrmGetResource(xrdb, R, NULL, &type, &value) == True) { \
@@ -107,6 +107,7 @@ struct Client {
 	int oldx, oldy, oldw, oldh;
 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
 	int bw, oldbw;
+	int gappx;
 	unsigned int tags;
 	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen;
 	int swallownext;
@@ -1540,6 +1541,7 @@ replaceclient(Client *old, Client *new)
 void
 resize(Client *c, int x, int y, int w, int h, int interact)
 {
+	c->gappx = 0;
 	if (applysizehints(c, &x, &y, &w, &h, interact))
 		resizeclient(c, x, y, w, h);
 }
@@ -1548,8 +1550,6 @@ void
 resizeclient(Client *c, int x, int y, int w, int h)
 {
 	XWindowChanges wc;
-	unsigned int n;
-	Client *nbc;
 
 	c->oldx = c->x; c->x = wc.x = x;
 	c->oldy = c->y; c->y = wc.y = y;
@@ -1557,11 +1557,8 @@ resizeclient(Client *c, int x, int y, int w, int h)
 	c->oldh = c->h; c->h = wc.height = h;
 	wc.border_width = c->bw;
 
-	for (n = 0, nbc = nexttiled(c->mon->clients); nbc; nbc = nexttiled(nbc->next), n++);
-
-	if (c->isfloating || selmon->lt[selmon->sellt]->arrange == NULL) {
-	} else {
-		if (selmon->lt[selmon->sellt]->arrange == monocle || n == 1) {
+	if (!c->isfloating && selmon->lt[selmon->sellt]->arrange) {
+		if (selmon->lt[selmon->sellt]->arrange == monocle || nexttiled(nexttiled(c->mon->clients)->next) == NULL) {
 			wc.border_width = 0;
 			c->w = wc.width += c->bw * 2;
 			c->h = wc.height += c->bw * 2;
@@ -1633,7 +1630,14 @@ resizemouse(const Arg *arg)
 void
 resizetile(Client *c, int x, int y, int w, int h, int centerx, int centery)
 {
+	c->gappx = gappx;
+	if (selmon->lt[selmon->sellt]->arrange == monocle || nexttiled(nexttiled(c->mon->clients)->next) == NULL)
+		c->gappx = 0;
+
 	int tw = w, th = h;
+	/* apply gaps */
+	w -= 2 * c->gappx;
+	h -= 2 * c->gappx;
 	if (applysizehints(c, &x, &y, &w, &h, 0)) {
 		if (centerx)
 			x += (tw - w) / 2;
