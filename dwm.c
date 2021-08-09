@@ -1601,11 +1601,13 @@ resizetile(Client *c, int x, int y, int w, int h, int centerx, int centery)
 	if (selmon->lt[selmon->sellt]->arrange == monocle || nexttiled(nexttiled(c->mon->clients)->next) == NULL)
 		c->gappx = 0;
 
-	int tw = w, th = h;
-	/* apply gaps */
 	w -= 2 * c->gappx;
 	h -= 2 * c->gappx;
+
+	int tw = w, th = h;
 	if (applysizehints(c, &x, &y, &w, &h, 0)) {
+		x += c->gappx;
+		y += c->gappx;
 		if (centerx)
 			x += (tw - w) / 2;
 		if (centery)
