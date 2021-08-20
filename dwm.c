@@ -1470,13 +1470,14 @@ replaceclient(Client *old, Client *new)
 {
 	Client *c = NULL;
 	Monitor *mon = old->mon;
-
-	if (old->isfullscreen)
-		setfullscreen(old, 0);
+	int wasfullscreen = old->isfullscreen;
 
 	new->mon = mon;
 	new->tags = old->tags;
+
+	setfullscreen(old, 0);
 	new->isfloating = old->isfloating;
+	setfullscreen(new, wasfullscreen);
 
 	new->next = old->next;
 	new->snext = old->snext;
@@ -1500,8 +1501,11 @@ replaceclient(Client *old, Client *new)
 
 	XMoveWindow(dpy, old->win, WIDTH(old) * -2, old->y);
 
-	if (ISVISIBLE(new)) {
-		resize(new, old->x, old->y, old->w - 2*new->bw, old->h - 2*new->bw, 0);
+	if (ISVISIBLE(new) && !new->isfullscreen) {
+		if (new->isfloating)
+			resize(new, old->x, old->y, new->w - 2*new->bw, new->h - 2*new->bw, 0);
+		else
+			resize(new, old->x, old->y, old->w - 2*new->bw, old->h - 2*new->bw, 0);
 	}
 }
 
