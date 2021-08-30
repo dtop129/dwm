@@ -2581,11 +2581,10 @@ load_xresources(void)
 	XrmDatabase db;
 	ResourcePref *p;
 
-	display = XOpenDisplay(NULL);
-	resm = XResourceManagerString(display);
-	if (!resm)
+	if (!(display = XOpenDisplay(NULL)))
 		return;
-
+	if (!(resm = XResourceManagerString(display)))
+		return;
 	db = XrmGetStringDatabase(resm);
 	for (p = resources; p < resources + LENGTH(resources); p++)
 		resource_load(db, p->name, p->type, p->dst);
