@@ -262,6 +262,7 @@ static void zoom(const Arg *arg);
 static void load_xresources(void);
 static void resource_load(XrmDatabase db, char *name, enum resource_type rtype, void *dst);
 
+static void detachswallow(const Arg *arg);
 static int swallow(Client *p, Client *c);
 static void unswallow(Client *c);
 static Client *swallowingclient(Window w);
@@ -1470,11 +1471,11 @@ replaceclient(Client *old, Client *new)
 {
 	Client *c = NULL;
 	Monitor *mon = old->mon;
-	int wasfullscreen = old->isfullscreen;
 
 	new->mon = mon;
 	new->tags = old->tags;
 
+	int wasfullscreen = old->isfullscreen;
 	setfullscreen(old, 0);
 	new->isfloating = old->isfloating;
 	setfullscreen(new, wasfullscreen);
@@ -1958,6 +1959,20 @@ sigterm(int unused)
 {
 	Arg a = {.i = 0};
 	quit(&a);
+}
+
+void
+detachswallow(const Arg *arg)
+{
+	Client *c = selmon->sel;
+	if (c && c->swallowing) {
+		c->swallowing->next = c->next;
+		c->swallowing->snext = c->snext;
+		c->next = c->swallowing;
+		c->snext = c->swallowing;
+		c->swallowing = NULL;
+		arrange(c->mon);
+	}
 }
 
 int
