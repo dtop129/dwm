@@ -596,7 +596,7 @@ void
 configurenotify(XEvent *e)
 {
 	Monitor *m;
-	Client *c;
+	Client *c, *sel = selmon->sel;
 	XConfigureEvent *ev = &e->xconfigure;
 	int dirty;
 
@@ -614,7 +614,8 @@ configurenotify(XEvent *e)
 						resizeclient(c, m->mx, m->my, m->mw, m->mh);
 				XMoveResizeWindow(dpy, m->barwin, m->wx, m->by, m->ww, bh);
 			}
-			focus(NULL);
+			focus(sel);
+			restack(sel->mon);
 			arrange(NULL);
 		}
 	}
