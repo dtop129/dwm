@@ -1514,7 +1514,6 @@ replaceclient(Client *old, Client *new)
 void
 resize(Client *c, int x, int y, int w, int h, int interact)
 {
-	c->gappx = 0;
 	if (applysizehints(c, &x, &y, &w, &h, interact))
 		resizeclient(c, x, y, w, h);
 }
@@ -1536,7 +1535,8 @@ resizeclient(Client *c, int x, int y, int w, int h)
 			c->w = wc.width += c->bw * 2;
 			c->h = wc.height += c->bw * 2;
 		}
-	}
+	} else
+		c->gappx = 0;
 
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 	configure(c);
