@@ -615,7 +615,8 @@ configurenotify(XEvent *e)
 				XMoveResizeWindow(dpy, m->barwin, m->wx, m->by, m->ww, bh);
 			}
 			focus(sel);
-			restack(sel->mon);
+			if (sel)
+				restack(sel->mon);
 			arrange(NULL);
 		}
 	}
