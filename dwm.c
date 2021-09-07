@@ -1875,6 +1875,8 @@ showhide(Client *c)
 			for (fc = c->snext; fc; fc = fc->snext)
 				if (fc->isfullscreen)
 					setfullscreen(fc, 0);
+			if (c->mon == selmon)
+				focus(c);
 			resizeclient(c, c->mon->mx, c->mon->my, c->mon->mw, c->mon->mh);
 		}
 		showhide(c->snext);
