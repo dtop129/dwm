@@ -638,6 +638,8 @@ configurenotify(XEvent *e)
 			}
 			focus(NULL);
 			arrange(NULL);
+			if (selmon->sel)
+				XWarpPointer(dpy, None, selmon->sel->win, 0, 0, 0, 0, selmon->sel->w/2, selmon->sel->h/2);
 		}
 	}
 }
@@ -2169,7 +2171,7 @@ updategeom(void)
 			updatebarpos(mons);
 		}
 	}
-	if (dirty) {
+	if (!selmon) {
 		selmon = mons;
 		selmon = wintomon(root);
 	}
