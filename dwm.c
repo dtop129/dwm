@@ -53,8 +53,8 @@
 #define ISVISIBLE(C, M)         ((C->tags & M->tagset[M->seltags]))
 #define LENGTH(X)               (sizeof X / sizeof X[0])
 #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
-#define WIDTH(X)                ((X)->w + 2 * (X)->bw)
-#define HEIGHT(X)               ((X)->h + 2 * (X)->bw)
+#define WIDTH(X)                ((X)->w + 2 * ((X)->bw + (X)->gappx))
+#define HEIGHT(X)               ((X)->h + 2 * ((X)->bw + (X)->gappx))
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
 
@@ -93,6 +93,7 @@ struct Client {
 	int oldx, oldy, oldw, oldh;
 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
 	int bw, oldbw;
+	int gappx;
 	unsigned int tags;
 	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen;
 	Client *next;
@@ -213,6 +214,7 @@ static Monitor *recttomon(int x, int y, int w, int h);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
 static void resizeclient(Client *c, int x, int y, int w, int h);
 static void resizemouse(const Arg *arg);
+static void resizetile(Client *c, int x, int y, int w, int h, int centerx, int centery);
 static void restack(Monitor *m);
 static void run(void);
 static void scan(void);
@@ -1492,6 +1494,16 @@ resizeclient(Client *c, int x, int y, int w, int h)
 	c->oldw = c->w; c->w = wc.width = w;
 	c->oldh = c->h; c->h = wc.height = h;
 	wc.border_width = c->bw;
+
+	if (!c->isfloating && selmon->lt[selmon->sellt]->arrange) {
+		if (selmon->lt[selmon->sellt]->arrange == monocle || nexttiled(nexttiled(c->mon->cl->clients, c->mon)->next, c->mon) == NULL) {
+			wc.border_width = 0;
+			c->w = wc.width += c->bw * 2;
+			c->h = wc.height += c->bw * 2;
+		}
+	} else
+		c->gappx = 0;
+
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 	configure(c);
 	XSync(dpy, False);
@@ -1551,6 +1563,28 @@ resizemouse(const Arg *arg)
 		sendmon(c, m);
 		selmon = m;
 		focus(NULL);
+	}
+}
+
+void
+resizetile(Client *c, int x, int y, int w, int h, int centerx, int centery)
+{
+	c->gappx = gappx;
+	if (selmon->lt[selmon->sellt]->arrange == monocle || nexttiled(nexttiled(c->mon->cl->clients, c->mon)->next, c->mon) == NULL)
+		c->gappx = 0;
+
+	int tw = w, th = h;
+	/* apply gaps */
+	x += gappx;
+	y += gappx;
+	w -= 2 * c->gappx;
+	h -= 2 * c->gappx;
+	if (applysizehints(c, &x, &y, &w, &h, 0)) {
+		if (centerx)
+			x += (tw - w) / 2 - gappx;
+		if (centery)
+			y += (th - h) / 2 - gappx;
+		resizeclient(c, x, y, w, h);
 	}
 }
 
@@ -1924,12 +1958,12 @@ tile(Monitor *m)
 	for (i = my = ty = 0, c = nexttiled(m->cl->clients, m); c; c = nexttiled(c->next, m), i++)
 		if (i < m->nmaster) {
 			h = (m->wh - my) / (MIN(n, m->nmaster) - i);
-			resize(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 0);
+			resizetile(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 1, i == (nmaster - 1));
 			if (my + HEIGHT(c) < m->wh)
 				my += HEIGHT(c);
 		} else {
 			h = (m->wh - ty) / (n - i);
-			resize(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 0);
+			resizetile(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 1, i == (n - 1));
 			if (ty + HEIGHT(c) < m->wh)
 				ty += HEIGHT(c);
 		}
