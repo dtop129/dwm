@@ -1440,6 +1440,7 @@ propertynotify(XEvent *e)
 			break;
 		case XA_WM_NORMAL_HINTS:
 			updatesizehints(c);
+			arrange(c->mon);
 			break;
 		case XA_WM_HINTS:
 			updatewmhints(c);
