@@ -1661,6 +1661,8 @@ sendmon(Client *c, Monitor *m)
 		return;
 	unfocus(c, 1);
 	detachstack(c);
+	if (c->isfullscreen)
+		m->sel = c;
 	c->mon = m;
 	c->tags = m->tagset[m->seltags]; /* assign tags of target monitor */
 	attachstack(c);
@@ -1864,7 +1866,6 @@ seturgent(Client *c, int urg)
 void
 showhide(Client *c)
 {
-	Client *fc;
 	if (!c)
 		return;
 	if (ISVISIBLE(c, c->mon)) {
@@ -1873,12 +1874,10 @@ showhide(Client *c)
 		if ((!c->mon->lt[c->mon->sellt]->arrange || c->isfloating) && !c->isfullscreen)
 			resize(c, c->x, c->y, c->w, c->h, 0);
 		else if (c->isfullscreen) {
-			for (fc = c->snext; fc; fc = fc->snext)
-				if (fc->isfullscreen)
-					setfullscreen(fc, 0);
-			if (c->mon == selmon)
-				focus(c);
-			resizeclient(c, c->mon->mx, c->mon->my, c->mon->mw, c->mon->mh);
+			if (c != c->mon->sel)
+				setfullscreen(c, 0);
+			else
+				resizeclient(c, c->mon->mx, c->mon->my, c->mon->mw, c->mon->mh);
 		}
 		showhide(c->snext);
 	} else {
