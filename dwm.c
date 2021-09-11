@@ -2440,7 +2440,6 @@ void
 view(const Arg *arg)
 {
 	Monitor *m;
-	Client *c;
 	unsigned int newtagset = selmon->tagset[selmon->seltags ^ 1];
 	if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
 		return;
@@ -2453,9 +2452,7 @@ view(const Arg *arg)
 			 * are connected */
 			if (newtagset & selmon->tagset[selmon->seltags])
 				return;
-			c = m->sel;
 			m->sel = selmon->sel;
-			selmon->sel = c;
 			m->seltags ^= 1;
 			m->tagset[m->seltags] = selmon->tagset[selmon->seltags];
 			attachclients(m);
