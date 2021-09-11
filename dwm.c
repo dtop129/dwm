@@ -1742,8 +1742,7 @@ sendmon(Client *c, Monitor *m)
 		return;
 	unfocus(c, 1);
 	detachstack(c);
-	if (c->isfullscreen)
-		m->sel = c;
+	m->sel = c;
 	c->mon = m;
 	c->tags = m->tagset[m->seltags]; /* assign tags of target monitor */
 	attachstack(c);
@@ -1957,8 +1956,13 @@ showhide(Client *c)
 		else if (c->isfullscreen) {
 			if (c != c->mon->sel)
 				setfullscreen(c, 0);
-			else
+			else {
+				c->x = c->oldx;
+				c->y = c->oldy;
+				c->w = c->oldw;
+				c->h = c->oldh;
 				resizeclient(c, c->mon->mx, c->mon->my, c->mon->mw, c->mon->mh);
+			}
 		}
 		showhide(c->snext);
 	} else {
