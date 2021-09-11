@@ -2025,6 +2025,8 @@ tag(const Arg *arg)
 					return;
 				selmon->sel->tags = newtags;
 				selmon->sel->mon = m;
+				if (selmon->sel->isfullscreen)
+					m->sel = selmon->sel;
 				arrange(m);
 				break;
 			}
