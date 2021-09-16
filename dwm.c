@@ -237,6 +237,7 @@ static void sighup(int unused);
 static void sigterm(int unused);
 static void tag(const Arg *arg);
 static void tagmon(const Arg *arg);
+static void tagswapmon(const Arg *arg);
 static void tile(Monitor *);
 static void togglebar(const Arg *arg);
 static void togglefloating(const Arg *arg);
@@ -2048,6 +2049,20 @@ tagmon(const Arg *arg)
 		return;
 	sendmon(selmon->sel, dirtomon(arg->i));
 	focusmon(arg);
+}
+
+void
+tagswapmon(const Arg *arg)
+{
+	Monitor *m;
+	Arg tagarg = {0};
+
+	if (!mons->next)
+		return;
+
+	m = dirtomon(arg->i);
+	tagarg.ui = m->tagset[m->seltags];
+	view(&tagarg);
 }
 
 void
