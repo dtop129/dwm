@@ -1081,6 +1081,7 @@ focusstack(const Arg *arg)
 					c = i;
 	}
 	if (c) {
+		warp(c);
 		focus(c);
 		restack(selmon);
 	}
@@ -1324,6 +1325,7 @@ manage(Window w, XWindowAttributes *wa)
 	XMapWindow(dpy, c->win);
 	if (focusclient)
 		focus(NULL);
+	warp(selmon->sel);
 }
 
 void
@@ -1694,8 +1696,6 @@ restack(Monitor *m)
 	}
 	XSync(dpy, False);
 	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
-	if (m == selmon && (m->tagset[m->seltags] & m->sel->tags) && selmon->lt[selmon->sellt] != &layouts[2])
-		warp(m->sel);
 }
 
 void
@@ -2207,6 +2207,7 @@ unmanage(Client *c, int destroyed)
 	focus(NULL);
 	updateclientlist();
 	arrange(m);
+	warp(selmon->sel);
 }
 
 void
@@ -2485,6 +2486,7 @@ view(const Arg *arg)
 	attachclients(selmon);
 	focus(NULL);
 	arrange(selmon);
+	warp(selmon->sel);
 }
 
 void
