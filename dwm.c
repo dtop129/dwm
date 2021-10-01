@@ -1524,8 +1524,7 @@ replaceclient(Client *old, Client *new)
 	Monitor *mon = old->mon;
 
 	new->mon = mon;
-	if (old->isfullscreen)
-		setfullscreen(new, 1);
+	setfullscreen(new, old->isfullscreen);
 
 	new->tags = old->tags;
 	new->isfloating = old->isfloating;
@@ -2012,6 +2011,7 @@ swallow(Client *t, Client *c)
 void
 unswallow(Client *c)
 {
+	setfullscreen(c, c->swallowing->isfullscreen);
 	replaceclient(c, c->swallowing);
 	c->swallowing = NULL;
 }
