@@ -2065,6 +2065,7 @@ tagswapmon(const Arg *arg)
 	m = dirtomon(arg->i);
 	tagarg.ui = m->tagset[m->seltags];
 	view(&tagarg);
+	focusmon(arg);
 }
 
 void
