@@ -350,7 +350,12 @@ applyrules(Client *c)
 		XFree(ch.res_class);
 	if (ch.res_name)
 		XFree(ch.res_name);
-	c->tags = c->tags & TAGMASK ? c->tags & TAGMASK : c->mon->tagset[c->mon->seltags];
+	if (c->tags & TAGMASK)
+		c->tags = c->tags & TAGMASK;
+	else if (c->mon->tagset[c->mon->seltags])
+		c->tags = c->mon->tagset[c->mon->seltags];
+	else
+		c->tags = 1;
 }
 
 int
@@ -1744,7 +1749,7 @@ sendmon(Client *c, Monitor *m)
 	detachstack(c);
 	m->sel = c;
 	c->mon = m;
-	c->tags = m->tagset[m->seltags]; /* assign tags of target monitor */
+	c->tags = m->tagset[m->seltags] ? m->tagset[m->seltags] : 1; /* assign tags of target monitor */
 	attachstack(c);
 	focus(NULL);
 	arrange(NULL);
@@ -2057,14 +2062,25 @@ void
 tagswapmon(const Arg *arg)
 {
 	Monitor *m;
-	Arg tagarg = {0};
 
 	if (!mons->next)
 		return;
 
 	m = dirtomon(arg->i);
-	tagarg.ui = m->tagset[m->seltags];
-	view(&tagarg);
+
+	selmon->tagset[selmon->seltags ^ 1] = m->tagset[m->seltags];
+	m->tagset[m->seltags ^ 1] = selmon->tagset[selmon->seltags];
+
+	m->sel = selmon->sel;
+
+	selmon->seltags ^= 1;
+	m->seltags ^= 1;
+
+	attachclients(selmon);
+	attachclients(m);
+
+	focus(NULL);
+	arrange(NULL);
 	focusmon(arg);
 }
 
@@ -2152,16 +2168,14 @@ toggleview(const Arg *arg)
 	Monitor *m;
 	unsigned int newtagset = selmon->tagset[selmon->seltags] ^ (arg->ui & TAGMASK);
 
-	if (newtagset) {
-		/* prevent displaying the same tags on multiple monitors */
-		for(m = mons; m; m = m->next)
-			if(m != selmon && newtagset & m->tagset[m->seltags])
-				return;
-		selmon->tagset[selmon->seltags] = newtagset;
-		attachclients(selmon);
-		focus(NULL);
-		arrange(selmon);
-	}
+	/* prevent displaying the same tags on multiple monitors */
+	for(m = mons; m; m = m->next)
+		if(m != selmon && newtagset & m->tagset[m->seltags])
+			return;
+	selmon->tagset[selmon->seltags] = newtagset;
+	attachclients(selmon);
+	focus(NULL);
+	arrange(selmon);
 }
 
 void
@@ -2462,7 +2476,7 @@ view(const Arg *arg)
 {
 	Monitor *m;
 	unsigned int newtagset = selmon->tagset[selmon->seltags ^ 1];
-	if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
+	if (arg->ui && (arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
 		return;
 	/* swap tags when trying to display a tag from another monitor */
 	if (arg->ui & TAGMASK)
