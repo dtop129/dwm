@@ -258,6 +258,7 @@ static void updatetitle(Client *c);
 static void updatewindowtype(Client *c);
 static void updatewmhints(Client *c);
 static void view(const Arg *arg);
+static void viewempty(const Arg *arg);
 static void warp(const Client *c);
 static Client *wintoclient(Window w);
 static Monitor *wintomon(Window w);
@@ -2500,6 +2501,22 @@ view(const Arg *arg)
 	focus(NULL);
 	arrange(NULL);
 	warp(selmon->sel);
+}
+
+void
+viewempty(const Arg *arg)
+{
+	if (!selmon->tagset[selmon->seltags]) {
+		Arg arg2;
+		arg2.ui = selmon->tagset[selmon->seltags ^ 1];
+		view(&arg2);
+	}
+	else {
+		selmon->seltags ^= 1;
+		selmon->tagset[selmon->seltags] = 0;
+		focus(NULL);
+		arrange(selmon);
+	}
 }
 
 void

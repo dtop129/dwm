@@ -96,6 +96,7 @@ static Key keys[] = {
 	{ MODKEY|ShiftMask,             XK_space,  togglefloating, {0} },
 	{ MODKEY,                       XK_f,    togglefullscreen, {0} },
 	{ MODKEY,                       XK_0,      view,           {.ui = ~0 } },
+	{ MODKEY,                       XK_c,      viewempty,      {0} },
 	{ MODKEY|ShiftMask,             XK_0,      tag,            {.ui = ~0 } },
 	{ MODKEY,                       XK_s,      tagswapmon,     {.i = -1 } },
 	{ MODKEY|ShiftMask,             XK_s,      tagswapmon,     {.i = +1 } },
