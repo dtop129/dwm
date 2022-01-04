@@ -9,6 +9,7 @@ static int topbar             = 1;        /* 0 means bottom bar */
 static char font[]            = "monospace:size=10";
 static char font2[]           = "monospace:size=10";
 static const char *fonts[]          = { font, font2 };
+static const char swalsymbol[] = "缾";
 static char normbgcolor[]           = "#222222";
 static char normbordercolor[]       = "#444444";
 static char normfgcolor[]           = "#bbbbbb";
