@@ -274,6 +274,7 @@ static void unswallow(Client *c);
 static Client *swallowingclient(Window w);
 static Client *swallowerforwin(const Client *c);
 static void swallownext(const Arg* arg);
+static void detachswallow(const Arg* arg);
 
 /* variables */
 static const char broken[] = "broken";
@@ -2584,6 +2585,22 @@ swallownext(const Arg *arg)
 	if (!selmon->sel)
 		return;
 	selmon->sel->swallownext = 1;
+}
+
+void
+detachswallow(const Arg* arg)
+{
+	if (!selmon->sel)
+		return;
+
+	Client *c = selmon->sel;
+	c->swallowing->next = c->next;
+	c->swallowing->snext = c->snext;
+	c->next = c->swallowing;
+	c->snext = c->swallowing;
+	c->swallowing = NULL;
+
+	arrange(selmon);
 }
 
 Client *
