@@ -2592,6 +2592,8 @@ detachswallow(const Arg* arg)
 {
 	if (!selmon->sel)
 		return;
+	if (!selmon->sel->swallowing)
+		return;
 
 	Client *c = selmon->sel;
 	c->swallowing->next = c->next;
