@@ -2545,9 +2545,7 @@ warp(const Client *c)
 	    (x > c->x - c->bw &&
 	     y > c->y - c->bw &&
 	     x < c->x + c->w + c->bw*2 &&
-	     y < c->y + c->h + c->bw*2) ||
-	    (y > c->mon->by && y < c->mon->by + bh) ||
-	    (c->mon->topbar && !y))
+	     y < c->y + c->h + c->bw*2))
 		return;
 
 	XWarpPointer(dpy, None, c->win, 0, 0, 0, 0, c->w / 2, c->h / 2);
