@@ -1833,7 +1833,7 @@ setfullscreen(Client *c, int fullscreen)
 		c->isfullscreen = 0;
 		c->isfloating = c->oldstate;
 		c->bw = c->oldbw;
-		if (c->isfloating) {
+		if (c->isfloating || !c->mon->lt[c->mon->sellt]->arrange) {
 			c->x = c->oldx;
 			c->y = c->oldy;
 			c->w = c->oldw;
