@@ -499,7 +499,7 @@ attachstack(Client *c)
 void
 buttonpress(XEvent *e)
 {
-	unsigned int i, x, click, occ = 0;
+	unsigned int i, x, click, occ = 0, monocc = 0;
 	Arg arg = {0};
 	Client *c;
 	Monitor *m;
@@ -516,9 +516,11 @@ buttonpress(XEvent *e)
 		i = x = 0;
 		for (c = m->cl->clients; c; c = c->next)
 			occ |= c->tags == 255 ? 0 : c->tags;
+		for (m = mons; m; m = m->next)
+			monocc |= m->tagset[m->seltags];
 		do {
 			/* do not reserve space for vacant tags */
-			if (!(occ & 1 << i || m->tagset[m->seltags] & 1 << i))
+			if (!(occ & 1 << i || monocc & 1 << i))
 				continue;
 			x += TEXTW(tags[i]);
 		} while (ev->x >= x && ++i < LENGTH(tags));
@@ -951,13 +953,13 @@ drawbar(Monitor *m)
 		if (c->isurgent)
 			urg |= c->tags;
 	}
-	for (m2 = mons; m2; m2 = m2->next) {
+	for (m2 = mons; m2; m2 = m2->next)
 		monocc |= m2->tagset[m2->seltags];
-	}
+
 	x = 0;
 	for (i = 0; i < LENGTH(tags); i++) {
 		/* do not draw vacant tags */
-		if (!(occ & 1 << i || m->tagset[m->seltags] & 1 << i || monocc & 1 << i))
+		if (!(occ & 1 << i || monocc & 1 << i))
 			continue;
 
 		w = TEXTW(tags[i]);
