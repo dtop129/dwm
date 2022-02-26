@@ -661,7 +661,6 @@ configurenotify(XEvent *e)
 			}
 			focus(NULL);
 			arrange(NULL);
-			warp(selmon->sel);
 		}
 	}
 }
@@ -2234,6 +2233,7 @@ unmanage(Client *c, int destroyed)
 	}
 	free(c);
 	focus(NULL);
+	warp(m->sel);
 	updateclientlist();
 	arrange(m);
 }
@@ -2513,7 +2513,6 @@ view(const Arg *arg)
 	attachclients(selmon);
 	focus(NULL);
 	arrange(NULL);
-	warp(selmon->sel);
 }
 
 void
