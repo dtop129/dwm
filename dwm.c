@@ -2233,9 +2233,9 @@ unmanage(Client *c, int destroyed)
 	}
 	free(c);
 	focus(NULL);
-	warp(m->sel);
 	updateclientlist();
 	arrange(m);
+	warp(m->sel);
 }
 
 void
