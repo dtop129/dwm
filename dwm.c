@@ -1974,7 +1974,7 @@ showhide(Client *c)
 		if ((!c->mon->lt[c->mon->sellt]->arrange || c->isfloating) && !c->isfullscreen)
 			resize(c, c->x, c->y, c->w, c->h, 0);
 		else if (c->isfullscreen) {
-			if (c != c->mon->sel)
+			if (c != c->mon->sel && !c->mon->sel->isfloating)
 				setfullscreen(c, 0);
 			else {
 				c->x = c->oldx;
