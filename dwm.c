@@ -2597,13 +2597,17 @@ swallownext(const Arg *arg)
 void
 detachswallow(Client *c)
 {
+	c->swallowing->mon = c->mon;
+	c->swallowing->tags = c->tags;
+
 	c->swallowing->next = c->next;
 	c->swallowing->snext = c->snext;
 	c->next = c->swallowing;
 	c->snext = c->swallowing;
+
 	c->swallowing = NULL;
 
-	arrange(selmon);
+	arrange(c->mon);
 }
 
 Client *
