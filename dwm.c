@@ -460,33 +460,23 @@ attachclients(Monitor *m) {
 	/* attach clients to the specified monitor */
 	Monitor *tm;
 	Client *c;
-	unsigned int utags = 0;
-	Bool rmons = False;
 	if(!m)
 		return;
-
-	/* collect information about the tags in use */
-	for (tm = mons; tm; tm = tm->next)
-		if(tm != m)
-			utags |= tm->tagset[tm->seltags];
 
 	for (c = m->cl->clients; c; c = c->next)
 		if(ISVISIBLE(c, m)) {
 			/* if client is also visible on other tags that are displayed on
 			 * other monitors, remove these tags */
-			if(c->tags & utags) {
-				c->tags = c->tags & m->tagset[m->seltags];
-				rmons = True;
-			}
+			for (tm = mons; tm; tm = tm->next)
+				if (tm != m && c->tags & tm->tagset[tm->seltags]) {
+					c->tags = c->tags & m->tagset[m->seltags];
+					arrange(tm);
+					break;
+				}
+
 			unfocus(c, True);
 			c->mon = m;
 		}
-
-	if (rmons)
-		for (tm = mons; tm; tm = tm->next)
-			if(tm != m)
-				arrange(tm);
-
 }
 
 void
@@ -1102,7 +1092,6 @@ focusstack(const Arg *arg)
 	if (c) {
 		focus(c);
 		restack(selmon);
-		warp(c);
 	}
 }
 
@@ -1713,6 +1702,9 @@ restack(Monitor *m)
 	}
 	XSync(dpy, False);
 	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
+
+	if (m == selmon && (m->tagset[m->seltags] & m->sel->tags) && selmon->lt[selmon->sellt] != &layouts[2])
+		warp(m->sel);
 }
 
 void
@@ -2083,17 +2075,16 @@ tagswapmon(const Arg *arg)
 
 	selmon->tagset[selmon->seltags ^ 1] = m->tagset[m->seltags];
 	m->tagset[m->seltags ^ 1] = selmon->tagset[selmon->seltags];
-
-	m->sel = selmon->sel;
-
 	selmon->seltags ^= 1;
 	m->seltags ^= 1;
 
+	m->sel = selmon->sel;
+
 	attachclients(selmon);
 	attachclients(m);
+	arrange(selmon);
+	arrange(m);
 
-	focus(NULL);
-	arrange(NULL);
 	focusmon(arg);
 }
 
@@ -2235,7 +2226,6 @@ unmanage(Client *c, int destroyed)
 	focus(NULL);
 	updateclientlist();
 	arrange(m);
-	warp(m->sel);
 }
 
 void
