@@ -2066,6 +2066,7 @@ tagmon(const Arg *arg)
 void
 tagswapmon(const Arg *arg)
 {
+	Client *c;
 	Monitor *m;
 
 	if (!mons->next)
@@ -2073,18 +2074,23 @@ tagswapmon(const Arg *arg)
 
 	m = dirtomon(arg->i);
 
-	selmon->tagset[selmon->seltags ^ 1] = m->tagset[m->seltags];
-	m->tagset[m->seltags ^ 1] = selmon->tagset[selmon->seltags];
+	c = selmon->sel;
+	selmon->sel = m->sel;
+	m->sel = c;
+
 	selmon->seltags ^= 1;
 	m->seltags ^= 1;
+	selmon->tagset[selmon->seltags] = m->tagset[m->seltags ^ 1];
+	m->tagset[m->seltags] = selmon->tagset[selmon->seltags ^ 1];
 
-	m->sel = selmon->sel;
+	for (c = m->cl->clients; c; c = c->next)
+		if (ISVISIBLE(c, m))
+			c->mon = m;
+		else if (ISVISIBLE(c, selmon))
+			c->mon = selmon;
 
-	attachclients(selmon);
-	attachclients(m);
 	arrange(selmon);
 	arrange(m);
-
 	focusmon(arg);
 }
 
