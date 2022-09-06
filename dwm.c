@@ -1670,7 +1670,7 @@ resizetile(Client *c, int x, int y, int w, int h, int centerx, int centery)
 	y += gappx;
 	w -= 2 * c->gappx;
 	h -= 2 * c->gappx;
-	if (applysizehints(c, &x, &y, &w, &h, 0)) {
+	if (applysizehints(c, &x, &y, &w, &h, 0) || centerx || centery) {
 		if (centerx)
 			x += (tw - w) / 2 - gappx;
 		if (centery)
