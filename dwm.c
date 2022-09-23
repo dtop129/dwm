@@ -166,7 +166,7 @@ struct Clientlist {
 
 /* function declarations */
 static void applyrules(Client *c);
-static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
+static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact, int centerx, int centery);
 static void arrange(Monitor *m);
 static void arrangemon(Monitor *m);
 static void attach(Client *c);
@@ -361,10 +361,11 @@ applyrules(Client *c)
 }
 
 int
-applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact)
+applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact, int centerx, int centery)
 {
 	int baseismin;
 	Monitor *m = c->mon;
+	int prev_w = *w, prev_h = *h;
 
 	/* set minimum possible */
 	*w = MAX(1, *w);
@@ -423,6 +424,10 @@ applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact)
 		if (c->maxh)
 			*h = MIN(*h, c->maxh);
 	}
+	if (centerx)
+		*x += (prev_w - *w) / 2;
+	if (centery)
+		*y += (prev_h - *h) / 2;
 	return *x != c->x || *y != c->y || *w != c->w || *h != c->h;
 }
 
@@ -1571,7 +1576,7 @@ replaceclient(Client *old, Client *new)
 void
 resize(Client *c, int x, int y, int w, int h, int interact)
 {
-	if (applysizehints(c, &x, &y, &w, &h, interact))
+	if (applysizehints(c, &x, &y, &w, &h, interact, 0, 0))
 		resizeclient(c, x, y, w, h);
 }
 
@@ -1664,19 +1669,13 @@ resizetile(Client *c, int x, int y, int w, int h, int centerx, int centery)
 	if (selmon->lt[selmon->sellt]->arrange == monocle || nexttiled(nexttiled(c->mon->cl->clients, c->mon)->next, c->mon) == NULL)
 		c->gappx = 0;
 
-	int tw = w, th = h;
 	/* apply gaps */
-	x += gappx;
-	y += gappx;
+	x += c->gappx;
+	y += c->gappx;
 	w -= 2 * c->gappx;
 	h -= 2 * c->gappx;
-	if (applysizehints(c, &x, &y, &w, &h, 0) || centerx || centery) {
-		if (centerx)
-			x += (tw - w) / 2 - gappx;
-		if (centery)
-			y += (th - h) / 2 - gappx;
+	if (applysizehints(c, &x, &y, &w, &h, 0, centerx, centery))
 		resizeclient(c, x, y, w, h);
-	}
 }
 
 void
