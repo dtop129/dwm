@@ -8,7 +8,8 @@ static int showbar            = 1;        /* 0 means no bar */
 static int topbar             = 1;        /* 0 means bottom bar */
 static char font[]            = "monospace:size=10";
 static char font2[]           = "monospace:size=10";
-static const char *fonts[]          = { font, font2 };
+static char font3[]           = "monospace:size=10";
+static const char *fonts[]          = { font, font2, font3 };
 static const char swalsymbol[] = "缾";
 static char normbgcolor[]           = "#222222";
 static char normbordercolor[]       = "#444444";
@@ -53,6 +54,7 @@ static const Layout layouts[] = {
 ResourcePref resources[] = {
 		{ "font",               STRING,  &font },
 		{ "font2",              STRING,  &font2 },
+		{ "font3",              STRING,  &font3 },
 		{ "normbgcolor",        STRING,  &normbgcolor },
 		{ "normbordercolor",    STRING,  &normbordercolor },
 		{ "normfgcolor",        STRING,  &normfgcolor },
