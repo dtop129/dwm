@@ -2424,6 +2424,7 @@ updatesizehints(Client *c)
 		c->minh = size.base_height;
 	} else
 		c->minw = c->minh = 0;
+	c->minw = c->minh = 0;
 	if (size.flags & PAspect) {
 		c->mina = (float)size.min_aspect.y / size.min_aspect.x;
 		c->maxa = (float)size.max_aspect.x / size.max_aspect.y;
