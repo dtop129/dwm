@@ -482,7 +482,8 @@ attachclients(Monitor *m) {
 
 			unfocus(c, True);
 			c->mon = m;
-		}
+		} else
+			c->swallownext = 0;
 }
 
 void
@@ -2575,14 +2576,10 @@ Client *
 swallowerforwin(const Client *w)
 {
 	Client *c;
-	Monitor *m;
 
-	for (m = mons; m; m = m->next) {
-		for (c = m->cl->clients; c; c = c->next) {
-			if (!c->swallowing && c->swallownext)
-				return c;
-		}
-	}
+	for (c = selmon->cl->clients; c; c = c->next)
+		if (!c->swallowing && c->swallownext && ISVISIBLE(c, selmon))
+			return c;
 
 	return NULL;
 }
