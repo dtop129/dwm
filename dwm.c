@@ -1264,24 +1264,26 @@ killclient(const Arg *arg)
 void
 killunsel(const Arg *arg)
 {
-	Client *i = NULL;
+	Monitor *mon = NULL;
+	Client *c = NULL;
 
 	if (!selmon->sel)
 		return;
 
-	for (i = selmon->cl->clients; i; i = i->next) {
-		if (i != selmon->sel) {
-			if (!sendevent(i, wmatom[WMDelete])) {
-				XGrabServer(dpy);
-				XSetErrorHandler(xerrordummy);
-				XSetCloseDownMode(dpy, DestroyAll);
-				XKillClient(dpy, i->win);
-				XSync(dpy, False);
-				XSetErrorHandler(xerror);
-				XUngrabServer(dpy);
+	for (mon = mons; mon; mon = mon->next)
+		for (c = mon->cl->clients; c; c = c->next) {
+			if (c != selmon->sel) {
+				if (!sendevent(c, wmatom[WMDelete])) {
+					XGrabServer(dpy);
+					XSetErrorHandler(xerrordummy);
+					XSetCloseDownMode(dpy, DestroyAll);
+					XKillClient(dpy, c->win);
+					XSync(dpy, False);
+					XSetErrorHandler(xerror);
+					XUngrabServer(dpy);
+				}
 			}
 		}
-	}
 }
 
 void
