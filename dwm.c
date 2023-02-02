@@ -53,8 +53,8 @@
 #define ISVISIBLE(C, M)         ((C->tags & M->tagset[M->seltags]))
 #define LENGTH(X)               (sizeof X / sizeof X[0])
 #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
-#define WIDTH(X)                ((X)->w + 2 * ((X)->bw + (X)->gappx))
-#define HEIGHT(X)               ((X)->h + 2 * ((X)->bw + (X)->gappx))
+#define WIDTH(X)                ((X)->w + 2 * (X)->bw)
+#define HEIGHT(X)               ((X)->h + 2 * (X)->bw)
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
 
@@ -93,7 +93,6 @@ struct Client {
 	int oldx, oldy, oldw, oldh;
 	int basew, baseh, incw, inch, maxw, maxh, minw, minh;
 	int bw, oldbw;
-	int gappx;
 	unsigned int tags;
 	int isfixed, isfloating, isurgent, neverfocus, oldstate, isfullscreen;
 	int ignorecfgreqpos, ignorecfgreqsize;
@@ -125,6 +124,7 @@ struct Monitor {
 	int by;               /* bar geometry */
 	int mx, my, mw, mh;   /* screen size */
 	int wx, wy, ww, wh;   /* window area  */
+	int gappx;
 	unsigned int seltags;
 	unsigned int sellt;
 	unsigned int tagset[2];
@@ -166,7 +166,7 @@ struct Clientlist {
 
 /* function declarations */
 static void applyrules(Client *c);
-static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact, int centerx, int centery);
+static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 static void arrange(Monitor *m);
 static void arrangemon(Monitor *m);
 static void attach(Client *c);
@@ -217,9 +217,9 @@ static void quit(const Arg *arg);
 static Monitor *recttomon(int x, int y, int w, int h);
 static void replaceclient(Client *old, Client *new);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
+static void resizetile(Client *c, int x, int y, int w, int h, int centerx, int centery);
 static void resizeclient(Client *c, int x, int y, int w, int h);
 static void resizemouse(const Arg *arg);
-static void resizetile(Client *c, int x, int y, int w, int h, int centerx, int centery);
 static void restack(Monitor *m);
 static void run(void);
 static void scan(void);
@@ -362,11 +362,10 @@ applyrules(Client *c)
 }
 
 int
-applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact, int centerx, int centery)
+applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact)
 {
 	int baseismin;
 	Monitor *m = c->mon;
-	int prev_w = *w, prev_h = *h;
 
 	/* set minimum possible */
 	*w = MAX(1, *w);
@@ -425,10 +424,6 @@ applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact, int cent
 		if (c->maxh)
 			*h = MIN(*h, c->maxh);
 	}
-	if (centerx)
-		*x += (prev_w - *w) / 2;
-	if (centery)
-		*y += (prev_h - *h) / 2;
 	return *x != c->x || *y != c->y || *w != c->w || *h != c->h;
 }
 
@@ -1603,8 +1598,21 @@ replaceclient(Client *old, Client *new)
 void
 resize(Client *c, int x, int y, int w, int h, int interact)
 {
-	if (applysizehints(c, &x, &y, &w, &h, interact, 0, 0))
+	if (applysizehints(c, &x, &y, &w, &h, interact))
 		resizeclient(c, x, y, w, h);
+}
+
+void
+resizetile(Client *c, int x, int y, int w, int h, int centerx, int centery)
+{
+	int tile_w = w, tile_h = h;
+	if (applysizehints(c, &x, &y, &w, &h, 0)) {
+		if (centerx)
+			x += (tile_w - w) / 2;
+		if (centery)
+			y += (tile_h - h) / 2;
+		resizeclient(c, x, y, w, h);
+	}
 }
 
 void
@@ -1617,15 +1625,14 @@ resizeclient(Client *c, int x, int y, int w, int h)
 	c->oldw = c->w; c->w = wc.width = w;
 	c->oldh = c->h; c->h = wc.height = h;
 	wc.border_width = c->bw;
-
-	if (!c->isfloating && c->mon->lt[c->mon->sellt]->arrange) {
-		if (c->mon->lt[c->mon->sellt]->arrange == monocle || nexttiled(nexttiled(c->mon->cl->clients, c->mon)->next, c->mon) == NULL) {
-			wc.border_width = 0;
-			c->w = wc.width += c->bw * 2;
-			c->h = wc.height += c->bw * 2;
-		}
-	} else
-		c->gappx = 0;
+	if (c->mon->lt[c->mon->sellt]->arrange == &monocle || 
+			((nexttiled(c->mon->cl->clients, c->mon) == c && !nexttiled(c->next, c->mon))
+			&& !c->isfullscreen && !c->isfloating
+			&& c->mon->lt[c->mon->sellt]->arrange)) {
+		c->w = wc.width += c->bw * 2;
+		c->h = wc.height += c->bw * 2;
+		wc.border_width = 0;
+	}
 
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
 	configure(c);
@@ -1687,22 +1694,6 @@ resizemouse(const Arg *arg)
 		selmon = m;
 		focus(NULL);
 	}
-}
-
-void
-resizetile(Client *c, int x, int y, int w, int h, int centerx, int centery)
-{
-	c->gappx = gappx;
-	if (selmon->lt[selmon->sellt]->arrange == monocle || nexttiled(nexttiled(c->mon->cl->clients, c->mon)->next, c->mon) == NULL)
-		c->gappx = 0;
-
-	/* apply gaps */
-	x += c->gappx;
-	y += c->gappx;
-	w -= 2 * c->gappx;
-	h -= 2 * c->gappx;
-	if (applysizehints(c, &x, &y, &w, &h, 0, centerx, centery))
-		resizeclient(c, x, y, w, h);
 }
 
 void
@@ -2129,23 +2120,29 @@ tile(Monitor *m)
 	for (n = 0, c = nexttiled(m->cl->clients, m); c; c = nexttiled(c->next, m), n++);
 	if (n == 0)
 		return;
+	else if (n == 1)
+		m->gappx = 0;
+	else
+		m->gappx = gappx;
 
 	if (n > m->nmaster)
 		mw = m->nmaster ? m->ww * m->mfact : 0;
 	else
 		mw = m->ww;
-	for (i = my = ty = 0, c = nexttiled(m->cl->clients, m); c; c = nexttiled(c->next, m), i++)
+	for (i = my = ty = 0, c = nexttiled(m->cl->clients, m); c; c = nexttiled(c->next, m), i++) {
 		if (i < m->nmaster) {
 			h = (m->wh - my) / (MIN(n, m->nmaster) - i);
-			resizetile(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 1, i == (nmaster - 1));
-			if (my + HEIGHT(c) < m->wh)
-				my += HEIGHT(c);
+			resizetile(c, m->wx + m->gappx, m->wy + my + m->gappx, mw - 2*(c->bw+m->gappx), h - 2*(c->bw+m->gappx), 1, (i + 1) == nmaster);
+
+			if (my + HEIGHT(c) + 2 * m->gappx < m->wh)
+				my += HEIGHT(c) + 2 * m->gappx;
 		} else {
 			h = (m->wh - ty) / (n - i);
-			resizetile(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 1, i == (n - 1));
-			if (ty + HEIGHT(c) < m->wh)
-				ty += HEIGHT(c);
+			resizetile(c, m->wx + mw + m->gappx, m->wy + ty + m->gappx, m->ww - mw - 2*(c->bw+m->gappx), h - 2*(c->bw+m->gappx), 1, (i + 1) == n);
+			if (ty + HEIGHT(c) + 2 * m->gappx < m->wh)
+				ty += HEIGHT(c) + 2 * m->gappx;
 		}
+	}
 }
 
 void
