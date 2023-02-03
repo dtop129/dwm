@@ -203,7 +203,6 @@ static void grabkeys(void);
 static void incnmaster(const Arg *arg);
 static void keypress(XEvent *e);
 static void killclient(const Arg *arg);
-static void killunsel(const Arg *arg);
 static void manage(Window w, XWindowAttributes *wa);
 static void mappingnotify(XEvent *e);
 static void maprequest(XEvent *e);
@@ -1254,31 +1253,6 @@ killclient(const Arg *arg)
 		XSetErrorHandler(xerror);
 		XUngrabServer(dpy);
 	}
-}
-
-void
-killunsel(const Arg *arg)
-{
-	Monitor *mon = NULL;
-	Client *c = NULL;
-
-	if (!selmon->sel)
-		return;
-
-	for (mon = mons; mon; mon = mon->next)
-		for (c = mon->cl->clients; c; c = c->next) {
-			if (c != selmon->sel) {
-				if (!sendevent(c, wmatom[WMDelete])) {
-					XGrabServer(dpy);
-					XSetErrorHandler(xerrordummy);
-					XSetCloseDownMode(dpy, DestroyAll);
-					XKillClient(dpy, c->win);
-					XSync(dpy, False);
-					XSetErrorHandler(xerror);
-					XUngrabServer(dpy);
-				}
-			}
-		}
 }
 
 void
